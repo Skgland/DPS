@@ -1,0 +1,121 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\author{Bennet Bleßmann}
+\begin{document}
+$([Int], Maybe Char, [a])$
+
+
+
+$length [] = 0$
+
+$length (x:xs) = 1 + length xs$
+
+$funsum xs ys = length xs + length ys$
+
+\paragraph{}
+
+\underline{Typannahme:}
+
+$0,1::Int$
+
+$(+)::Int->Int->Int$
+
+$[] :: \forall a.[a]$
+
+$(:) :: \forall a. a->[a]->[a]$
+
+$length::\forall a.[a]->Int$
+
+$funsum::[a]->[b]->Int$
+
+$xs::[a]$
+
+$ys::[b]$
+
+$\frac{\frac{\frac{}{funsum::[a]->[b]->Int},\frac{}{xs::[a]}}{funsum\, xs ::[b] -> Int},\frac{}{ys :: [b]}}{funsum\, xs\, ys :: Int}$
+
+\paragraph{}
+
+\underline{Typinferenz:} möglichst allgemeiner Typausdrücke raten, sodass typkorrekt
+
+$\hookrightarrow$ Danas/Milna PoPL'82
+
+Idee: statt Typ raten: setze Typvariable ein, formuliere Bedingungen für diese $\approx$ Typgleichungen, löse das Gleichungssystem $\rightarrow$ allgemeinster Typ
+
+\begin{enumerate}
+
+\item \underline{Variablenumbenennung}, sodass verschiedene Regeln verschiedene Variablen haben
+
+		$app\, []\, x = x				\rightarrow \{x 	\mapsto z\}		app\, []\, z = z$ \linebreak
+		
+		$app\, (x:xs)\, ys = x: app\, xs\, ys$
+		
+\item Bilde \underline{Ausdrucks/Typ-Paare}: Regel $l = r \rightsquigarrow l::a, R::a (a neue Typvariable)$
+												$l|c = r \rightsquigarrow l::a,r::a, c::Bool (a neue Typvariable)$
+												
+\item Vereinfache Ausdrucks/Typ-Paare:
+	Ersetze:
+	\begin{itemize}
+		\item $(e_1\, e_2)::\tau $ durch $e_1::a \rightarrow \tau, e_2::a $ (a neue Typvariable)
+
+		\item $if \, e_1\, then\, e_2 \, else\, e_3$ durch $e_1::Bool, e_2::\tau, e_3::\tau$
+		
+		\item $e_1 \circ e_2 ::\tau$ durch $e_1::a , e_2 ::b , \circ::a->b->\tau$ (a,b neue Typvariablen)
+		
+		\item $\setminus x \rightarrow e ::\tau$ durch $x::a, e::b$ und Typgleichung $\tau \dot{=} a->b$ (a,b neue Typvariablen)
+		
+		\item $f::\tau$, f vordefiniert mit Typschema $\forall a_1,...,a_n.\tau^\prime$ durch $\tau \dot{=} \sigma(\tau^\prime)$ und $\sigma=\{a_1\mapsto b_1, ..., a_n \mapsto b_n\}$ ($b_1,...,b_n$ neue Typvariablen)	
+	\end{itemize}
+	
+\item Nun: Paare der From $x::\tau$ (x Bezeichnung) setze alle Typen eines Bezeichners gleich: $x::\tau, x::\tau^\prime \rightsquigarrow \tau \dot{=} \tau^\prime$
+
+\item Löse das Typgleichungssystem, d.h. finde allg. Unifikator $\sigma$, für $x::\tau$, $x::\sigma(\tau)$ der allgemeinste Typ von $x$
+	Somit: Für typkorrekte Programme existiert immer ein allgemeinster Typ!
+	
+\end{enumerate}
+
+Example for 4.
+\begin{verbatim}
+
+(twice f) x :: a 						f(f x)::a
+twice f :: b \rightarrow a 	x ::b		f::d \rightarrow a  	f x ::d
+twice::c \rightarrow (b \rightarrow a) 	f::c					f::e \rightawwor d  	x::e
+
+b=e
+c=d\rightarrow
+c=e\rightarrow d
+\end{verbatim}
+
+Def.: - Substitution $\sigma$ \underline{Unifikator} für Gleichungssystem E falls $\forall l \dot{=} r \in E$ gilt $\sigma(l)=sigma(r)$
+	- Subst. $\sigma$ \underline{allgem. Unifikator}(mgu) für E falls $\forall$ Unifi $\sigma^\prime$ für E exist. Subst $\varphi$ mit $\sigma^\prime \varphi \circ \sigma$
+	
+Satz(Robinson'): Falls Unifikator existiert, existiert auch mgu, der effektiv berechenbar ist.
+Berechnung nach Martelli/Montanavi'82: Transformationsregel $\frac{A}{B}\downarrow$
+
+De composition $\frac{\{k s_1 ... s_n \dot{=}k t_1 ... t_n \}\cup E}{\{s_1 \dot{=} t_1, ..., s_n \dot{=}t_n\} \cup E}$
+
+Clash $\frac{\{h s_1 ... s_n \dot{=} h^\prime t_1 ... t_n\}}{Fail} h \neq h^\prime$
+
+Elimination	$\frac{\{x \dot{=} x\} \cup E}{E}$
+
+Swap $\frac{\{k s_1 ... s_n \dot{=} x \} \cup E}{\{x \dot{=} k s_1 ... s_n \}\cup E}$
+
+Replace $\frac{\{x \dot{=} \tau\}\cup E}{ \{x \dot{=} \tau\}\cup \sigma(E)}$ x Typvar, $x$ kommt nicht in $\tau$ vor, $\sigma = \{x \mapsto \tau\}$
+
+Occur Check $\frac{\{x\dot{=}\tau\} \cup E}{Fail}$ x Typvar, $x+\tau$, x kommt in $\tau$ vor
+
+\paragraph{}
+\underline{Typinferenz} für beliebig viele (rekursive) Funktionen
+\begin{enumerate}
+\item Sortiere Funktion nach Abhängigkeiten
+\item Inferiere Typ der Basisfunktionen falls typkorrekt, dann dafür Typschemata
+\item Inferiere Typ der darauf aufbauenden Funktionen, ... , wiederhohle diesen schrit bis fertig.
+\end{enumerate}
+
+\end{document}
